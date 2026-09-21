@@ -13,28 +13,35 @@ This script:
   6. Creates 1 demo customer (demo@customer.com / Demo@123) with 2 sample policies
 """
 
-import os
-import sys
-from datetime import datetime, timedelta, timezone
+import click
+from flask.cli import with_appcontext
+from datetime import datetime, timezone
 
-# ── Ensure we can import the app package from this script's location ──────────
-# When run as: python app/seed.py  →  __file__ = .../backend/app/seed.py
-# We need to add the backend/ directory (parent of app/) to sys.path
-_script_dir = os.path.dirname(os.path.abspath(__file__))
-_backend_dir = os.path.dirname(_script_dir)
-sys.path.insert(0, _backend_dir)
+from app import mongo
 
-from dotenv import load_dotenv
+import bcrypt
+def hash_password(password: str) -> bytes:
+    return bcrypt.hashpw(password.encode("utf-8"), bcrypt.gensalt())
 
-load_dotenv(os.path.join(_backend_dir, ".env"))
+def create_product(**kwargs):
+    kwargs["is_active"] = True
+    kwargs["created_at"] = datetime.now(timezone.utc)
+    kwargs["updated_at"] = datetime.now(timezone.utc)
+    return kwargs
 
-from pymongo import MongoClient
+def create_blog(**kwargs):
+    kwargs["created_at"] = datetime.now(timezone.utc)
+    kwargs["updated_at"] = datetime.now(timezone.utc)
+    return kwargs
 
-from app.models.blog import create_blog
-from app.models.product import create_product
-from app.models.user import create_user
+def create_user(**kwargs):
+    kwargs["password_hash"] = hash_password(kwargs.pop("password"))
+    kwargs["created_at"] = datetime.now(timezone.utc)
+    kwargs["updated_at"] = datetime.now(timezone.utc)
+    if "policies" not in kwargs:
+        kwargs["policies"] = []
+    return kwargs
 
-MONGO_URI: str = os.getenv("MONGO_URI", "mongodb://localhost:27017/hdfc_life")
 
 
 # ──────────────────────────────────────────────────────────────────────────────
@@ -488,22 +495,15 @@ Start today with HDFC Life Pension Guaranteed Plan — guaranteed income for lif
 ]
 
 
-def run_seed():
+@click.command('seed')
+@with_appcontext
+def seed_command():
     """Connect to MongoDB and seed all collections."""
     print(f"\n{'='*60}")
     print("  HDFC Life Insurance — Database Seed Script")
     print(f"{'='*60}\n")
 
-    # ── Connect ───────────────────────────────────────────────────────────────
-    print(f"► Connecting to MongoDB: {MONGO_URI}")
-    try:
-        client = MongoClient(MONGO_URI, serverSelectionTimeoutMS=5000)
-        client.server_info()  # Trigger connection error early
-        db = client.get_database()
-        print("  ✔ Connected successfully.\n")
-    except Exception as exc:
-        print(f"  ✘ Connection failed: {exc}")
-        sys.exit(1)
+    db = mongo.db
 
     # ── Drop & recreate collections ───────────────────────────────────────────
     collections = ["users", "products", "blogs", "leads", "claims"]
@@ -587,9 +587,3 @@ def run_seed():
     print("  Admin     → admin@hdfclife.com   / Admin@123")
     print("  Customer  → demo@customer.com    / Demo@123")
     print(f"\n{'='*60}\n")
-
-    client.close()
-
-
-if __name__ == "__main__":
-    run_seed()

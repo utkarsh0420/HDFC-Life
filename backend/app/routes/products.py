@@ -12,7 +12,9 @@ from flask import Blueprint, jsonify, request
 from flask_jwt_extended import get_jwt, jwt_required
 
 from app import mongo
-from app.models.product import CATEGORIES, create_product
+from app.routes.utils import admin_required
+
+CATEGORIES = ["Life Insurance", "Health Insurance", "Investment Plans", "Retirement Plans"]
 
 products_bp = Blueprint("products", __name__)
 
@@ -26,16 +28,6 @@ def objectid_to_str(doc: dict) -> dict:
     return doc
 
 
-def admin_required(fn):
-    """Decorator: ensures the JWT identity belongs to an admin user."""
-    @wraps(fn)
-    @jwt_required()
-    def wrapper(*args, **kwargs):
-        claims = get_jwt()
-        if claims.get("role") != "admin":
-            return jsonify({"error": "Admin access required"}), 403
-        return fn(*args, **kwargs)
-    return wrapper
 
 
 # ── GET /api/products ─────────────────────────────────────────────────────────
@@ -100,11 +92,23 @@ def create_product_route():
         if data["category"] not in CATEGORIES:
             return jsonify({"error": f"category must be one of {CATEGORIES}"}), 400
 
-        product_doc = create_product(
-            name=data["name"],
-            category=data["category"],
-            description=data["description"],
-            min_age=int(data["min_age"]),
+                product_doc = {
+            "name": data["name"],
+            "category": category,
+            "description": data["description"],
+            "min_age": int(data["min_age"]),
+            "max_age": int(data["max_age"]),
+            "min_term": int(data["min_term"]),
+            "max_term": int(data["max_term"]),
+            "base_premium_rate": float(data["base_premium_rate"]),
+            "features": data.get("features", []),
+            "benefits": data.get("benefits", []),
+            "eligibility": data.get("eligibility", []),
+            "documents_required": data.get("documents_required", []),
+            "is_active": True,
+            "created_at": datetime.now(timezone.utc),
+            "updated_at": datetime.now(timezone.utc),
+        },
             max_age=int(data["max_age"]),
             min_term=int(data["min_term"]),
             max_term=int(data["max_term"]),

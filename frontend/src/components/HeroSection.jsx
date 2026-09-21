@@ -1,3 +1,4 @@
+import { formatCurrency } from '../utils/currency'
 import { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
 import { Link } from 'react-router-dom'
@@ -171,7 +172,7 @@ const HeroSection = () => {
                       <p className="text-white/50 text-xs">Sum Assured</p>
                       <p className="text-white font-bold">
                         {heroPolicy 
-                          ? new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR', maximumFractionDigits: 0 }).format(heroPolicy.sum_assured)
+                          ? formatCurrency(heroPolicy.sum_assured)
                           : '₹1 Cr'}
                       </p>
                     </div>
@@ -179,7 +180,7 @@ const HeroSection = () => {
                       <p className="text-white/50 text-xs">Annual Premium</p>
                       <p className="text-white font-bold">
                         {heroPolicy
-                          ? new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR', maximumFractionDigits: 0 }).format(heroPolicy.premium)
+                          ? formatCurrency(heroPolicy.premium)
                           : '₹12,500'}
                       </p>
                     </div>

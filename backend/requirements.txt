@@ -3,5 +3,4 @@ flask-pymongo
 flask-jwt-extended
 flask-cors
 bcrypt
-pymongo
 python-dotenv

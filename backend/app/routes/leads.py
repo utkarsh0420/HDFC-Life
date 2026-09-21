@@ -12,30 +12,17 @@ from flask import Blueprint, jsonify, request
 from flask_jwt_extended import get_jwt, jwt_required
 
 from app import mongo
-from app.models.lead import VALID_STATUSES, create_lead
+from app.routes.utils import _serialize, admin_required
+
+VALID_STATUSES = ['new', 'contacted', 'qualified', 'lost', 'converted']
 
 leads_bp = Blueprint("leads", __name__)
 
 
 # ── Helpers ───────────────────────────────────────────────────────────────────
 
-def _serialize(doc: dict) -> dict:
-    """Convert _id ObjectId to string."""
-    if doc and "_id" in doc:
-        doc["_id"] = str(doc["_id"])
-    return doc
 
 
-def admin_required(fn):
-    """Decorator: ensures the JWT identity belongs to an admin user."""
-    @wraps(fn)
-    @jwt_required()
-    def wrapper(*args, **kwargs):
-        claims = get_jwt()
-        if claims.get("role") != "admin":
-            return jsonify({"error": "Admin access required"}), 403
-        return fn(*args, **kwargs)
-    return wrapper
 
 
 # ── POST /api/leads ───────────────────────────────────────────────────────────
@@ -56,11 +43,16 @@ def create_lead_route():
         if not phone:
             return jsonify({"error": "phone is required"}), 400
 
-        lead_doc = create_lead(
-            name=name,
-            email=email,
-            phone=phone,
-            city=data.get("city", ""),
+                lead_doc = {
+            "name": data["name"].strip(),
+            "email": data["email"].strip().lower(),
+            "phone": data["phone"].strip(),
+            "product_id": data["product_id"].strip(),
+            "status": "new",
+            "notes": data.get("notes", ""),
+            "created_at": datetime.now(timezone.utc),
+            "updated_at": datetime.now(timezone.utc),
+        },
             product_interest=data.get("product_interest", ""),
             annual_income=data.get("annual_income", 0),
             message=data.get("message", ""),

@@ -1,9 +1,11 @@
+import { formatCurrency } from '../utils/currency'
 import { useState, useEffect } from 'react'
 import { useParams, Link } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import { FiArrowLeft, FiShield, FiTrendingUp, FiHeart, FiSunrise,
   FiCheckCircle, FiFileText, FiUser, FiAlertCircle, FiLoader } from 'react-icons/fi'
 import { getProduct, calculatePremium, submitLead } from '../services/api'
+import { calculatePremiumMock } from '../utils/calculator'
 import { toast } from 'react-toastify'
 
 const TABS = ['Overview', 'Benefits', 'Eligibility', 'Documents']
@@ -86,14 +88,7 @@ const ProductDetail = () => {
       const res = await calculatePremium({ plan_type: product.category, age, sum_assured: sumAssured, term })
       setCalcResult(res.data)
     } catch {
-      const base = sumAssured * 0.002 * (1 + (age - 25) * 0.03) * (term / 20)
-      const annual = Math.round(base)
-      setCalcResult({
-        annual_premium: annual,
-        monthly_premium: Math.round(annual / 12),
-        gst_amount: Math.round(annual * 0.18),
-        total_with_gst: Math.round(annual * 1.18),
-      })
+      setCalcResult(calculatePremiumMock({ planType: 'term', age, sumAssured, term }))
     } finally {
       setCalcLoading(false)
     }

@@ -1,6 +1,8 @@
+import { formatCurrency } from '../utils/currency'
 import { useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { calculatePremium } from '../services/api'
+import { calculatePremiumMock } from '../utils/calculator'
 import { FiShield, FiTrendingUp, FiHeart, FiSunrise, FiX, FiLoader } from 'react-icons/fi'
 import { toast } from 'react-toastify'
 
@@ -35,18 +37,7 @@ const PremiumCalculatorWidget = () => {
       setResult(res.data)
       setModalOpen(true)
     } catch (err) {
-      // Fallback mock calculation when backend isn't available
-      const base = sumAssured * 0.002 * (1 + (age - 25) * 0.03) * (term / 20)
-      const annual = Math.round(base)
-      setResult({
-        annual_premium: annual,
-        monthly_premium: Math.round(annual / 12),
-        quarterly_premium: Math.round(annual / 4),
-        gst_amount: Math.round(annual * 0.18),
-        total_with_gst: Math.round(annual * 1.18),
-        plan_type: plan,
-        sum_assured: sumAssured,
-      })
+      setResult(calculatePremiumMock({ planType: plan, age, sumAssured, term }))
       setModalOpen(true)
     } finally {
       setLoading(false)

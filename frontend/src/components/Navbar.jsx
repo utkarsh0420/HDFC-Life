@@ -1,9 +1,7 @@
-import { useState, useEffect, useRef } from 'react'
 import { Link, NavLink, useNavigate, useLocation } from 'react-router-dom'
-import { motion, AnimatePresence } from 'framer-motion'
 import { useAuth } from '../context/AuthContext'
 import {
-  FiMenu, FiX, FiChevronDown, FiUser, FiLogOut,
+  FiMenu, FiX, FiChevronDown, FiLogOut,
   FiGrid, FiFileText, FiShield, FiTrendingUp, FiHeart, FiSunrise
 } from 'react-icons/fi'
 import logoImage from '../assets/logo.jpg'
@@ -22,49 +20,24 @@ const navLinks = [
 ]
 
 const Navbar = () => {
-  const [scrolled, setScrolled] = useState(false)
-  const [menuOpen, setMenuOpen] = useState(false)
-  const [dropdownOpen, setDropdownOpen] = useState(false)
-  const [userDropOpen, setUserDropOpen] = useState(false)
   const { isAuthenticated, user, logout } = useAuth()
   const navigate = useNavigate()
   const location = useLocation()
-  const dropRef = useRef(null)
-  const userDropRef = useRef(null)
 
   const isHomePage = location.pathname === '/'
 
-  useEffect(() => {
-    const onScroll = () => setScrolled(window.scrollY > 30)
-    window.addEventListener('scroll', onScroll)
-    return () => window.removeEventListener('scroll', onScroll)
-  }, [])
-
-  // Close dropdowns on outside click
-  useEffect(() => {
-    const handler = (e) => {
-      if (dropRef.current && !dropRef.current.contains(e.target)) setDropdownOpen(false)
-      if (userDropRef.current && !userDropRef.current.contains(e.target)) setUserDropOpen(false)
-    }
-    document.addEventListener('mousedown', handler)
-    return () => document.removeEventListener('mousedown', handler)
-  }, [])
-
   const handleLogout = () => {
     logout()
-    setUserDropOpen(false)
     navigate('/')
   }
 
+  // Helper to close all <details> dropdowns
+  const closeDropdowns = () => {
+    document.querySelectorAll('details').forEach((d) => d.removeAttribute('open'))
+  }
+
   return (
-    <motion.nav
-      initial={{ y: -80 }}
-      animate={{ y: 0 }}
-      transition={{ duration: 0.5 }}
-      className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
-        scrolled || !isHomePage ? 'bg-navy shadow-xl shadow-navy/30' : 'bg-transparent'
-      }`}
-    >
+    <nav className={`sticky top-0 z-50 transition-all duration-300 ${isHomePage ? 'bg-navy shadow-xl shadow-navy/30' : 'bg-navy shadow-xl'}`}>
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16 lg:h-20">
           {/* Logo */}
@@ -90,58 +63,42 @@ const Navbar = () => {
             </NavLink>
 
             {/* Products Dropdown */}
-            <div className="relative" ref={dropRef}>
-              <button
-                onClick={() => setDropdownOpen(!dropdownOpen)}
-                className="flex items-center gap-1 px-4 py-2 rounded-lg text-sm font-medium text-white/80 hover:text-white hover:bg-white/10 transition-colors"
-              >
+            <details className="relative group">
+              <summary className="flex items-center gap-1 px-4 py-2 rounded-lg text-sm font-medium text-white/80 hover:text-white hover:bg-white/10 transition-colors cursor-pointer list-none [&::-webkit-details-marker]:hidden">
                 Products
-                <FiChevronDown
-                  className={`transition-transform duration-200 ${dropdownOpen ? 'rotate-180' : ''}`}
-                />
-              </button>
-
-              <AnimatePresence>
-                {dropdownOpen && (
-                  <motion.div
-                    initial={{ opacity: 0, y: 8 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: 8 }}
-                    transition={{ duration: 0.15 }}
-                    className="absolute top-full left-0 mt-2 w-72 bg-white rounded-xl shadow-2xl border border-gray-100 overflow-hidden"
-                  >
-                    <div className="p-2">
-                      {productCategories.map((cat) => (
-                        <Link
-                          key={cat.name}
-                          to={cat.href}
-                          onClick={() => setDropdownOpen(false)}
-                          className="flex items-center gap-3 p-3 rounded-lg hover:bg-gray-50 group transition-colors"
-                        >
-                          <div className="w-9 h-9 bg-primary/10 rounded-lg flex items-center justify-center group-hover:bg-primary/20 transition-colors">
-                            <cat.icon className="text-primary w-4 h-4" />
-                          </div>
-                          <div>
-                            <p className="text-navy font-semibold text-sm">{cat.name}</p>
-                            <p className="text-gray-400 text-xs">{cat.desc}</p>
-                          </div>
-                        </Link>
-                      ))}
-                      <div className="border-t border-gray-100 mt-2 pt-2">
-                        <Link
-                          to="/products"
-                          onClick={() => setDropdownOpen(false)}
-                          className="flex items-center gap-2 p-3 rounded-lg hover:bg-primary/5 text-primary font-semibold text-sm transition-colors"
-                        >
-                          <FiGrid className="w-4 h-4" />
-                          View All Products
-                        </Link>
+                <FiChevronDown className="transition-transform group-open:rotate-180" />
+              </summary>
+              <div className="absolute top-full left-0 mt-2 w-72 bg-white rounded-xl shadow-2xl border border-gray-100 overflow-hidden">
+                <div className="p-2">
+                  {productCategories.map((cat) => (
+                    <Link
+                      key={cat.name}
+                      to={cat.href}
+                      onClick={closeDropdowns}
+                      className="flex items-center gap-3 p-3 rounded-lg hover:bg-gray-50 group transition-colors"
+                    >
+                      <div className="w-9 h-9 bg-primary/10 rounded-lg flex items-center justify-center group-hover:bg-primary/20 transition-colors">
+                        <cat.icon className="text-primary w-4 h-4" />
                       </div>
-                    </div>
-                  </motion.div>
-                )}
-              </AnimatePresence>
-            </div>
+                      <div>
+                        <p className="text-navy font-semibold text-sm">{cat.name}</p>
+                        <p className="text-gray-400 text-xs">{cat.desc}</p>
+                      </div>
+                    </Link>
+                  ))}
+                  <div className="border-t border-gray-100 mt-2 pt-2">
+                    <Link
+                      to="/products"
+                      onClick={closeDropdowns}
+                      className="flex items-center gap-2 p-3 rounded-lg hover:bg-primary/5 text-primary font-semibold text-sm transition-colors"
+                    >
+                      <FiGrid className="w-4 h-4" />
+                      View All Products
+                    </Link>
+                  </div>
+                </div>
+              </div>
+            </details>
 
             {navLinks.slice(1).map((link) => (
               <NavLink
@@ -172,54 +129,42 @@ const Navbar = () => {
           {/* Right – Auth */}
           <div className="hidden lg:flex items-center gap-3">
             {isAuthenticated ? (
-              <div className="relative" ref={userDropRef}>
-                <button
-                  onClick={() => setUserDropOpen(!userDropOpen)}
-                  className="flex items-center gap-2 bg-white/10 hover:bg-white/20 transition-colors px-3 py-2 rounded-xl"
-                >
+              <details className="relative group">
+                <summary className="flex items-center gap-2 bg-white/10 hover:bg-white/20 transition-colors px-3 py-2 rounded-xl cursor-pointer list-none [&::-webkit-details-marker]:hidden">
                   <div className="w-8 h-8 bg-primary rounded-full flex items-center justify-center text-white font-bold text-sm">
                     {user?.username?.[0]?.toUpperCase() || 'U'}
                   </div>
                   <span className="text-white text-sm font-medium">{user?.username}</span>
-                  <FiChevronDown className={`text-white/60 transition-transform ${userDropOpen ? 'rotate-180' : ''}`} />
-                </button>
+                  <FiChevronDown className="text-white/60 transition-transform group-open:rotate-180" />
+                </summary>
 
-                <AnimatePresence>
-                  {userDropOpen && (
-                    <motion.div
-                      initial={{ opacity: 0, y: 8 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      exit={{ opacity: 0, y: 8 }}
-                      className="absolute right-0 top-full mt-2 w-48 bg-white rounded-xl shadow-2xl border border-gray-100 overflow-hidden"
-                    >
-                      <Link
-                        to={user?.role === 'admin' ? '/admin' : '/dashboard'}
-                        onClick={() => setUserDropOpen(false)}
-                        className="flex items-center gap-3 px-4 py-3 hover:bg-gray-50 text-navy text-sm font-medium transition-colors"
-                      >
-                        <FiGrid className="w-4 h-4 text-primary" />
-                        Dashboard
-                      </Link>
-                      <Link
-                        to={user?.role === 'admin' ? '/admin' : '/dashboard'}
-                        onClick={() => setUserDropOpen(false)}
-                        className="flex items-center gap-3 px-4 py-3 hover:bg-gray-50 text-navy text-sm font-medium transition-colors"
-                      >
-                        <FiFileText className="w-4 h-4 text-primary" />
-                        My Policies
-                      </Link>
-                      <div className="border-t border-gray-100" />
-                      <button
-                        onClick={handleLogout}
-                        className="flex items-center gap-3 px-4 py-3 hover:bg-red-50 text-red-600 text-sm font-medium w-full transition-colors"
-                      >
-                        <FiLogOut className="w-4 h-4" />
-                        Logout
-                      </button>
-                    </motion.div>
-                  )}
-                </AnimatePresence>
-              </div>
+                <div className="absolute right-0 top-full mt-2 w-48 bg-white rounded-xl shadow-2xl border border-gray-100 overflow-hidden">
+                  <Link
+                    to="/dashboard"
+                    onClick={closeDropdowns}
+                    className="flex items-center gap-3 px-4 py-3 hover:bg-gray-50 text-navy text-sm font-medium transition-colors"
+                  >
+                    <FiGrid className="w-4 h-4 text-primary" />
+                    Dashboard
+                  </Link>
+                  <Link
+                    to="/dashboard"
+                    onClick={closeDropdowns}
+                    className="flex items-center gap-3 px-4 py-3 hover:bg-gray-50 text-navy text-sm font-medium transition-colors"
+                  >
+                    <FiFileText className="w-4 h-4 text-primary" />
+                    My Policies
+                  </Link>
+                  <div className="border-t border-gray-100" />
+                  <button
+                    onClick={handleLogout}
+                    className="flex items-center gap-3 px-4 py-3 hover:bg-red-50 text-red-600 text-sm font-medium w-full transition-colors"
+                  >
+                    <FiLogOut className="w-4 h-4" />
+                    Logout
+                  </button>
+                </div>
+              </details>
             ) : (
               <>
                 <Link to="/login" className="text-white/80 hover:text-white text-sm font-medium transition-colors px-3 py-2">
@@ -233,68 +178,58 @@ const Navbar = () => {
           </div>
 
           {/* Mobile Hamburger */}
-          <button
-            onClick={() => setMenuOpen(!menuOpen)}
-            className="lg:hidden text-white p-2 rounded-lg hover:bg-white/10 transition-colors"
-          >
-            {menuOpen ? <FiX size={22} /> : <FiMenu size={22} />}
-          </button>
-        </div>
-      </div>
+          <details className="lg:hidden group">
+            <summary className="text-white p-2 rounded-lg hover:bg-white/10 transition-colors cursor-pointer list-none [&::-webkit-details-marker]:hidden">
+              <FiMenu size={22} className="group-open:hidden" />
+              <FiX size={22} className="hidden group-open:block" />
+            </summary>
 
-      {/* Mobile Menu */}
-      <AnimatePresence>
-        {menuOpen && (
-          <motion.div
-            initial={{ opacity: 0, height: 0 }}
-            animate={{ opacity: 1, height: 'auto' }}
-            exit={{ opacity: 0, height: 0 }}
-            className="lg:hidden bg-navy border-t border-white/10 overflow-hidden"
-          >
-            <div className="px-4 py-4 space-y-1">
-              {[{ name: 'Home', href: '/' }, { name: 'Products', href: '/products' }, { name: 'Calculator', href: '/calculator' }, { name: 'Blogs', href: '/blogs' }].map((link) => (
+            <div className="absolute left-0 right-0 top-full bg-navy border-t border-white/10 overflow-hidden shadow-xl">
+              <div className="px-4 py-4 space-y-1">
+                {[{ name: 'Home', href: '/' }, { name: 'Products', href: '/products' }, { name: 'Calculator', href: '/calculator' }, { name: 'Blogs', href: '/blogs' }].map((link) => (
+                  <Link
+                    key={link.name}
+                    to={link.href}
+                    onClick={closeDropdowns}
+                    className="block px-4 py-3 rounded-lg text-white/80 hover:text-white hover:bg-white/10 font-medium transition-colors"
+                  >
+                    {link.name}
+                  </Link>
+                ))}
                 <Link
-                  key={link.name}
-                  to={link.href}
-                  onClick={() => setMenuOpen(false)}
-                  className="block px-4 py-3 rounded-lg text-white/80 hover:text-white hover:bg-white/10 font-medium transition-colors"
+                  to="/become-partner"
+                  onClick={closeDropdowns}
+                  className="block px-4 py-3 rounded-lg text-gold hover:text-amber-400 hover:bg-gold/10 font-semibold transition-colors"
                 >
-                  {link.name}
+                  ✦ Become a Partner
                 </Link>
-              ))}
-              <Link
-                to="/become-partner"
-                onClick={() => setMenuOpen(false)}
-                className="block px-4 py-3 rounded-lg text-gold hover:text-amber-400 hover:bg-gold/10 font-semibold transition-colors"
-              >
-                ✦ Become a Partner
-              </Link>
-              <div className="border-t border-white/10 pt-3 mt-3 space-y-2">
-                {isAuthenticated ? (
-                  <>
-                    <Link to={user?.role === 'admin' ? '/admin' : '/dashboard'} onClick={() => setMenuOpen(false)} className="block px-4 py-3 rounded-lg text-white/80 hover:text-white hover:bg-white/10 font-medium transition-colors">
-                      Dashboard
-                    </Link>
-                    <button onClick={() => { handleLogout(); setMenuOpen(false) }} className="block w-full text-left px-4 py-3 rounded-lg text-red-400 hover:bg-red-500/10 font-medium transition-colors">
-                      Logout
-                    </button>
-                  </>
-                ) : (
-                  <>
-                    <Link to="/login" onClick={() => setMenuOpen(false)} className="block px-4 py-3 rounded-lg text-white/80 hover:text-white hover:bg-white/10 font-medium transition-colors">
-                      Login
-                    </Link>
-                    <Link to="/register" onClick={() => setMenuOpen(false)} className="block px-4 py-3 rounded-lg bg-primary text-white font-semibold text-center">
-                      Get Started
-                    </Link>
-                  </>
-                )}
+                <div className="border-t border-white/10 pt-3 mt-3 space-y-2">
+                  {isAuthenticated ? (
+                    <>
+                      <Link to="/dashboard" onClick={closeDropdowns} className="block px-4 py-3 rounded-lg text-white/80 hover:text-white hover:bg-white/10 font-medium transition-colors">
+                        Dashboard
+                      </Link>
+                      <button onClick={handleLogout} className="block w-full text-left px-4 py-3 rounded-lg text-red-400 hover:bg-red-500/10 font-medium transition-colors">
+                        Logout
+                      </button>
+                    </>
+                  ) : (
+                    <>
+                      <Link to="/login" onClick={closeDropdowns} className="block px-4 py-3 rounded-lg text-white/80 hover:text-white hover:bg-white/10 font-medium transition-colors">
+                        Login
+                      </Link>
+                      <Link to="/register" onClick={closeDropdowns} className="block px-4 py-3 rounded-lg bg-primary text-white font-semibold text-center">
+                        Get Started
+                      </Link>
+                    </>
+                  )}
+                </div>
               </div>
             </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-    </motion.nav>
+          </details>
+        </div>
+      </div>
+    </nav>
   )
 }
 

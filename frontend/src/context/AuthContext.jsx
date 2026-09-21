@@ -1,6 +1,6 @@
 import { createContext, useContext, useState, useEffect, useCallback } from 'react'
 import { loginUser, registerUser, getMe } from '../services/api'
-import api from '../services/api'
+
 
 const AuthContext = createContext(null)
 
@@ -24,14 +24,7 @@ export const AuthProvider = ({ children }) => {
     setLoading(false)
   }, [])
 
-  // Persist token in axios default headers whenever it changes
-  useEffect(() => {
-    if (token) {
-      api.defaults.headers.common['Authorization'] = `Bearer ${token}`
-    } else {
-      delete api.defaults.headers.common['Authorization']
-    }
-  }, [token])
+
 
   const login = useCallback(async (email, password) => {
     const response = await loginUser(email, password)

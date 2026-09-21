@@ -42,6 +42,10 @@ def create_app() -> Flask:
     app.register_blueprint(dashboard_bp, url_prefix="/api/dashboard")
     app.register_blueprint(partners_bp, url_prefix="/api/partners")
 
+    # ── CLI Commands ──────────────────────────────────────────────────────────
+    from app.seed import seed_command
+    app.cli.add_command(seed_command)
+
     # ── Health-check route ────────────────────────────────────────────────────
     @app.route("/api/health")
     def health():

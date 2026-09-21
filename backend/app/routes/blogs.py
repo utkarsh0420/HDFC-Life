@@ -10,30 +10,16 @@ from flask import Blueprint, jsonify, request
 from flask_jwt_extended import get_jwt, jwt_required
 
 from app import mongo
-from app.models.blog import create_blog
+from app.routes.utils import _serialize, admin_required
+
 
 blogs_bp = Blueprint("blogs", __name__)
 
 
 # ── Helpers ───────────────────────────────────────────────────────────────────
 
-def _serialize(doc: dict) -> dict:
-    """Convert _id ObjectId to string."""
-    if doc and "_id" in doc:
-        doc["_id"] = str(doc["_id"])
-    return doc
 
 
-def admin_required(fn):
-    """Decorator: ensures the JWT identity belongs to an admin user."""
-    @wraps(fn)
-    @jwt_required()
-    def wrapper(*args, **kwargs):
-        claims = get_jwt()
-        if claims.get("role") != "admin":
-            return jsonify({"error": "Admin access required"}), 403
-        return fn(*args, **kwargs)
-    return wrapper
 
 
 # ── GET /api/blogs ────────────────────────────────────────────────────────────
@@ -109,16 +95,19 @@ def create_blog_route():
         if mongo.db.blogs.find_one({"slug": slug}):
             return jsonify({"error": "A blog with this slug already exists"}), 409
 
-        blog_doc = create_blog(
-            title=data["title"],
-            slug=slug,
-            category=data["category"],
-            author=data["author"],
-            content=data["content"],
-            image_url=data.get("image_url", ""),
-            tags=data.get("tags", []),
-            published=data.get("published", True),
-        )
+        blog_doc = {
+            "title": data["title"],
+            "slug": slug,
+            "category": data["category"],
+            "author": data["author"],
+            "content": data["content"],
+            "image_url": data.get("image_url", ""),
+            "tags": data.get("tags", []),
+            "published": data.get("published", True),
+            "views": 0,
+            "created_at": datetime.now(timezone.utc),
+            "updated_at": datetime.now(timezone.utc),
+        }
 
         result = mongo.db.blogs.insert_one(blog_doc)
         blog_doc["_id"] = result.inserted_id

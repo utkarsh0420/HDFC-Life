@@ -1,7 +1,6 @@
 """
 Dashboard routes for HDFC Life Insurance backend.
 Blueprint: dashboard | Prefix: /api/dashboard
-Blueprint: dashboard | Prefix: /api/dashboard
 """
 
 from datetime import datetime, timezone
@@ -11,15 +10,12 @@ from flask import Blueprint, jsonify, request
 from flask_jwt_extended import get_jwt_identity, jwt_required
 
 from app import mongo
+from app.routes.utils import _serialize
+
 
 dashboard_bp = Blueprint("dashboard", __name__)
 
 
-def _serialize(doc: dict) -> dict:
-    """Convert _id ObjectId to string."""
-    if doc and "_id" in doc:
-        doc["_id"] = str(doc["_id"])
-    return doc
 
 
 # ── GET /api/dashboard ────────────────────────────────────────────────────────

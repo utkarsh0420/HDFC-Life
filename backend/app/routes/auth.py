@@ -15,8 +15,15 @@ from flask_jwt_extended import (
 )
 
 from app import mongo
-from app.models.user import check_password, create_user, hash_password
+import bcrypt
 
+def hash_password(password: str) -> bytes:
+    return bcrypt.hashpw(password.encode("utf-8"), bcrypt.gensalt())
+
+def check_password(password: str, hashed: bytes) -> bool:
+    if isinstance(hashed, str):
+        hashed = hashed.encode("utf-8")
+    return bcrypt.checkpw(password.encode("utf-8"), hashed)
 auth_bp = Blueprint("auth", __name__)
 
 
@@ -61,8 +68,17 @@ def register():
             return jsonify({"error": "An account with this email already exists"}), 409
 
         # Create & insert user
-        user_doc = create_user(username, email, password, role="customer",
-                               phone=phone, city=city)
+        user_doc = {
+            "username": username,
+            "email": email.lower().strip(),
+            "password_hash": hash_password(password),
+            "role": "customer",
+            "phone": phone,
+            "city": city,
+            "created_at": datetime.now(timezone.utc),
+            "updated_at": datetime.now(timezone.utc),
+            "policies": [],
+        }
         result = mongo.db.users.insert_one(user_doc)
         user_doc["_id"] = result.inserted_id
 
@@ -192,9 +208,3 @@ def update_me():
         return jsonify({"error": "Profile update failed", "details": str(exc)}), 500
 
 
-# ── POST /api/auth/logout ─────────────────────────────────────────────────────
-@auth_bp.route("/logout", methods=["POST"])
-@jwt_required()
-def logout():
-    """Logout endpoint – instructs the client to discard its tokens."""
-    return jsonify({"message": "Logged out successfully"}), 200

@@ -1,8 +1,10 @@
+import { formatCurrency } from '../utils/currency'
 import { useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { FiShield, FiTrendingUp, FiHeart, FiSunrise, FiPrinter,
   FiShare2, FiCheck, FiLoader, FiChevronRight } from 'react-icons/fi'
 import { calculatePremium } from '../services/api'
+import { calculatePremiumMock } from '../utils/calculator'
 import { toast } from 'react-toastify'
 
 const planTypes = [
@@ -40,21 +42,7 @@ const Calculator = () => {
       const res = await calculatePremium({ plan_type: planType, age, smoker: isSmoker, sum_assured: sumAssured, term })
       setResult(res.data)
       setStep(3)
-    } catch {
-      const base = sumAssured * 0.002 * (1 + (age - 25) * 0.03) * (term / 20) * (isSmoker ? 1.25 : 1)
-      const annual = Math.round(base)
-      setResult({
-        annual_premium: annual,
-        monthly_premium: Math.round(annual / 12),
-        quarterly_premium: Math.round(annual / 4),
-        half_yearly_premium: Math.round(annual / 2),
-        gst_amount: Math.round(annual * 0.18),
-        total_with_gst: Math.round(annual * 1.18),
-        plan_type: planType,
-        sum_assured: sumAssured,
-        term,
-        age,
-      })
+      setResult(calculatePremiumMock({ planType, age, sumAssured, term, isSmoker }))
       setStep(3)
     } finally {
       setLoading(false)

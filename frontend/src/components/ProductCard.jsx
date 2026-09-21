@@ -1,3 +1,4 @@
+import { formatCurrency } from '../utils/currency'
 import { Link } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import { FiShield, FiTrendingUp, FiHeart, FiSunrise, FiArrowRight } from 'react-icons/fi'
@@ -8,9 +9,6 @@ const categoryConfig = {
   health: { icon: FiHeart, color: 'bg-green-100 text-green-600', border: 'border-green-200', badge: 'bg-green-50 text-green-600' },
   retirement: { icon: FiSunrise, color: 'bg-amber-100 text-amber-600', border: 'border-amber-200', badge: 'bg-amber-50 text-amber-600' },
 }
-
-const formatCurrency = (amount) =>
-  new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR', maximumFractionDigits: 0 }).format(amount)
 
 const ProductCard = ({ product }) => {
   const {
